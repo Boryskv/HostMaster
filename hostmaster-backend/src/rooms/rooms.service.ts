@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Room } from './entities/room.entity';
@@ -12,7 +12,16 @@ export class RoomsService {
     private roomsRepository: Repository<Room>,
   ) {}
 
-  create(createRoomDto: CreateRoomDto): Promise<Room> {
+  async create(createRoomDto: CreateRoomDto): Promise<Room> {
+    // Verifica se já existe um quarto com esse número
+    const existingRoom = await this.roomsRepository.findOne({
+      where: { number: createRoomDto.number },
+    });
+
+    if (existingRoom) {
+      throw new ConflictException(`Quarto ${createRoomDto.number} já existe`);
+    }
+
     const room = this.roomsRepository.create(createRoomDto);
     return this.roomsRepository.save(room);
   }

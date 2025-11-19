@@ -34,16 +34,35 @@ src/
 └── main.ts
 ```
 
+## Configuração do Banco de Dados
+
+### MySQL Workbench
+
+1. **Abra o MySQL Workbench**
+2. **Conecte ao servidor MySQL** (localhost:3306)
+3. **Execute o script de inicialização:**
+   ```sql
+   -- Arquivo: database/init.sql
+   CREATE DATABASE IF NOT EXISTS hostmaster CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+
+### Configuração
+
+As credenciais do banco estão no arquivo `.env`:
+
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=root
+DB_PASSWORD=1234
+DB_DATABASE=hostmaster
+```
+
 ## Instalação
 
 ```bash
 npm install
 ```
-
-## Configuração
-
-1. Copie o arquivo `.env.example` para `.env`
-2. Configure as variáveis de ambiente
 
 ## Executar
 
@@ -76,3 +95,18 @@ npm run start:prod
 - GET /api/reservations/:id - Buscar reserva
 - PATCH /api/reservations/:id - Atualizar reserva
 - DELETE /api/reservations/:id - Deletar reserva
+
+## Tecnologias
+
+- NestJS
+- TypeORM
+- MySQL
+- JWT Authentication
+- Bcrypt
+- Class Validator
+
+## Notas
+
+- O TypeORM está configurado com `synchronize: true` para desenvolvimento
+- As tabelas serão criadas automaticamente ao iniciar o servidor
+- Em produção, use migrations em vez de synchronize

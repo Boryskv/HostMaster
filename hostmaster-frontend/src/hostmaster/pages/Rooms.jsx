@@ -1,35 +1,357 @@
 import { useState, useEffect } from 'react';
-import Header from '../components/Header';
-import Sidebar from '../components/Sidebar';
-import RoomCard from '../components/RoomCard';
-import { getRooms } from '../services/hostmasterApi';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { getRooms, createRoom, updateRoom, deleteRoom } from '../services/hostmasterApi';
+import './Rooms.css';
 
 export default function Rooms() {
   const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingRoom, setEditingRoom] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newRoom, setNewRoom] = useState({
+    number: '',
+    type: 'Standard',
+    price: 150,
+    available: true,
+    description: ''
+  });
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadRooms();
   }, []);
 
   const loadRooms = async () => {
-    const data = await getRooms();
-    setRooms(data);
+    try {
+      const data = await getRooms();
+      setRooms(data);
+    } catch (error) {
+      console.error('Erro ao carregar quartos:', error);
+      // Mock data para demonstração caso o backend não esteja disponível
+      setRooms([
+        { id: 1, number: '1', type: 'Deluxe', price: 250, available: true, description: 'Quarto suíte com ar condicionado, frigobar, tv smart e mesa' },
+        { id: 2, number: '2', type: 'Deluxe', price: 250, available: false, description: 'Quarto suíte com ar condicionado, frigobar, tv smart e mesa' },
+        { id: 3, number: '3', type: 'Deluxe', price: 250, available: true, description: 'Quarto suíte com ar condicionado, frigobar, tv smart e mesa' },
+        { id: 4, number: '4', type: 'Standard', price: 150, available: true, description: 'Quarto confortável com cama de casal' },
+        { id: 5, number: '5', type: 'Standard', price: 150, available: false, description: 'Quarto aconchegante com vista para o jardim' },
+        { id: 6, number: '6', type: 'Standard', price: 150, available: true, description: 'Quarto standard com ar-condicionado' },
+        { id: 7, number: '170', type: 'Suite', price: 400, available: true, description: 'Suite presidencial com sala de estar e varanda ampla' },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  const handleEdit = (room) => {
+    setEditingRoom({ ...room });
+    setShowEditModal(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const { id, ...roomData } = editingRoom;
+      await updateRoom(id, roomData);
+      
+      // Atualiza a lista local
+      setRooms(rooms.map(room => 
+        room.id === editingRoom.id ? editingRoom : room
+      ));
+      
+      setShowEditModal(false);
+      setEditingRoom(null);
+    } catch (error) {
+      console.error('Erro ao salvar quarto:', error);
+      alert('Erro ao salvar alterações. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm(`Tem certeza que deseja deletar o Quarto ${editingRoom.number}?`)) {
+      try {
+        setLoading(true);
+        await deleteRoom(editingRoom.id);
+        
+        // Remove da lista local
+        setRooms(rooms.filter(room => room.id !== editingRoom.id));
+        
+        setShowEditModal(false);
+        setEditingRoom(null);
+      } catch (error) {
+        console.error('Erro ao deletar quarto:', error);
+        alert('Erro ao deletar quarto. Tente novamente.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setEditingRoom({ ...editingRoom, [field]: value });
+  };
+
+  const handleNewRoomChange = (field, value) => {
+    setNewRoom({ ...newRoom, [field]: value });
+  };
+
+  const handleCreate = async () => {
+    try {
+      if (!newRoom.number || !newRoom.type || !newRoom.price) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+      }
+
+      setLoading(true);
+      const createdRoom = await createRoom(newRoom);
+      
+      // Adiciona o novo quarto à lista
+      setRooms([...rooms, createdRoom]);
+      
+      // Reseta o formulário
+      setNewRoom({
+        number: '',
+        type: 'Standard',
+        price: 150,
+        available: true,
+        description: ''
+      });
+      
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error('Erro ao criar quarto:', error);
+      alert('Erro ao criar quarto. Verifique se o número já não existe.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="rooms">
-      <Header />
+    <div className="rooms-page">
+      <header className="page-header">
+        <div className="header-left">
+          <button onClick={() => navigate('/dashboard')} className="back-btn">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1>Gerenciar Quartos</h1>
+        </div>
+        <button onClick={logout} className="logout-btn">Sair</button>
+      </header>
+
       <div className="rooms-content">
-        <Sidebar />
-        <main>
-          <h1>Quartos</h1>
+        <div className="rooms-toolbar">
+          <div className="rooms-count">
+            <h2>Total de Quartos: {rooms.length}</h2>
+          </div>
+          <button className="add-room-btn" onClick={() => setShowCreateModal(true)}>
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Adicionar Quarto
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="loading">Carregando quartos...</div>
+        ) : (
           <div className="rooms-grid">
             {rooms.map((room) => (
-              <RoomCard key={room.id} room={room} />
+              <div key={room.id} className="room-card">
+                <div className="room-header">
+                  <div className="room-number">Quarto {room.number}</div>
+                  <div className="room-type-badge">{room.type}</div>
+                </div>
+                <div className="room-body">
+                  <p className="room-description">{room.description}</p>
+                  <div className="room-price">R$ {room.price}/noite</div>
+                </div>
+                <div className="room-actions">
+                  <button className="btn-edit" onClick={() => handleEdit(room)}>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Editar
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
-        </main>
+        )}
       </div>
+
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Adicionar Novo Quarto</h2>
+              <button className="close-btn" onClick={() => setShowCreateModal(false)}>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Número do Quarto *</label>
+                <input
+                  type="text"
+                  value={newRoom.number}
+                  onChange={(e) => handleNewRoomChange('number', e.target.value)}
+                  placeholder="Ex: 1, 2, 170..."
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Tipo *</label>
+                <select
+                  value={newRoom.type}
+                  onChange={(e) => handleNewRoomChange('type', e.target.value)}
+                >
+                  <option value="Standard">Standard</option>
+                  <option value="Deluxe">Deluxe</option>
+                  <option value="Suite">Suite</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Preço por Noite (R$) *</label>
+                <input
+                  type="number"
+                  value={newRoom.price}
+                  onChange={(e) => handleNewRoomChange('price', parseFloat(e.target.value))}
+                  min="0"
+                  step="10"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Descrição</label>
+                <textarea
+                  rows="3"
+                  value={newRoom.description}
+                  onChange={(e) => handleNewRoomChange('description', e.target.value)}
+                  placeholder="Descreva as características do quarto..."
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={newRoom.available}
+                    onChange={(e) => handleNewRoomChange('available', e.target.checked)}
+                  />
+                  <span>Disponível</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <div className="modal-actions" style={{ marginLeft: 'auto' }}>
+                <button className="btn-cancel" onClick={() => setShowCreateModal(false)}>
+                  Cancelar
+                </button>
+                <button className="btn-save" onClick={handleCreate}>
+                  Criar Quarto
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && editingRoom && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Editar Quarto {editingRoom.number}</h2>
+              <button className="close-btn" onClick={() => setShowEditModal(false)}>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Número do Quarto</label>
+                <input
+                  type="text"
+                  value={editingRoom.number}
+                  onChange={(e) => handleChange('number', e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Tipo</label>
+                <select
+                  value={editingRoom.type}
+                  onChange={(e) => handleChange('type', e.target.value)}
+                >
+                  <option value="Standard">Standard</option>
+                  <option value="Deluxe">Deluxe</option>
+                  <option value="Suite">Suite</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Preço por Noite (R$)</label>
+                <input
+                  type="number"
+                  value={editingRoom.price}
+                  onChange={(e) => handleChange('price', parseFloat(e.target.value))}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Descrição</label>
+                <textarea
+                  rows="3"
+                  value={editingRoom.description}
+                  onChange={(e) => handleChange('description', e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={editingRoom.available}
+                    onChange={(e) => handleChange('available', e.target.checked)}
+                  />
+                  <span>Disponível</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-delete" onClick={handleDelete}>
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Deletar
+              </button>
+              <div className="modal-actions">
+                <button className="btn-cancel" onClick={() => setShowEditModal(false)}>
+                  Cancelar
+                </button>
+                <button className="btn-save" onClick={handleSave}>
+                  Salvar Alterações
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

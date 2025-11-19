@@ -33,10 +33,38 @@ export const register = (data) =>
 
 export const getRooms = () => fetchApi('/rooms');
 
+export const createRoom = (data) =>
+  fetchApi('/rooms', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+
+export const updateRoom = (id, data) =>
+  fetchApi(`/rooms/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data)
+  });
+
+export const deleteRoom = (id) =>
+  fetchApi(`/rooms/${id}`, {
+    method: 'DELETE'
+  });
+
 export const getReservations = () => fetchApi('/reservations');
 
 export const createReservation = (data) =>
   fetchApi('/reservations', {
     method: 'POST',
     body: JSON.stringify(data)
+  });
+
+export const updateReservation = (id, data) =>
+  fetchApi(`/reservations/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data)
+  });
+
+export const deleteReservation = (id) =>
+  fetchApi(`/reservations/${id}`, {
+    method: 'DELETE'
   });
