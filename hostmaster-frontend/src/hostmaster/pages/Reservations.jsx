@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getReservations } from '../services/hostmasterApi';
+import ReservationModal from '../components/ReservationModal';
 import './Reservations.css';
 
 export default function Reservations() {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState(null);
   const [filter, setFilter] = useState('all');
   const [selectedDate, setSelectedDate] = useState('');
   const { logout } = useAuth();
@@ -23,18 +25,23 @@ export default function Reservations() {
       setReservations(data);
     } catch (error) {
       console.error('Erro ao carregar reservas:', error);
-      // Mock data para demonstração
-      setReservations([
-        { id: 1, guestName: 'João Silva', roomNumber: '1', checkIn: '2024-11-20', checkOut: '2024-11-25', status: 'confirmed' },
-        { id: 2, guestName: 'Maria Santos', roomNumber: '2', checkIn: '2024-11-18', checkOut: '2024-11-22', status: 'checked-in' },
-        { id: 3, guestName: 'Pedro Costa', roomNumber: '5', checkIn: '2024-11-25', checkOut: '2024-11-30', status: 'pending' },
-        { id: 4, guestName: 'Ana Oliveira', roomNumber: '4', checkIn: '2024-11-15', checkOut: '2024-11-20', status: 'checked-out' },
-        { id: 5, guestName: 'Carlos Souza', roomNumber: '3', checkIn: '2024-11-22', checkOut: '2024-11-28', status: 'confirmed' },
-        { id: 6, guestName: 'Roberto Lima', roomNumber: '170', checkIn: '2024-11-19', checkOut: '2024-11-24', status: 'checked-in' },
-      ]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenModal = (reservation = null) => {
+    setSelectedReservation(reservation);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedReservation(null);
+  };
+
+  const handleModalSuccess = () => {
+    loadReservations();
   };
 
   const getStatusLabel = (status) => {
@@ -44,6 +51,15 @@ export default function Reservations() {
       'checked-in': 'Check-in',
       'checked-out': 'Check-out',
       'cancelled': 'Cancelada'
+    };
+    return labels[status] || status;
+  };
+
+  const getPaymentStatusLabel = (status) => {
+    const labels = {
+      'pending': 'Pendente',
+      'partial': 'Sinal',
+      'paid': 'Pago'
     };
     return labels[status] || status;
   };
@@ -150,7 +166,7 @@ export default function Reservations() {
             </div>
           </div>
 
-          <button className="add-reservation-btn" onClick={() => setShowForm(!showForm)}>
+          <button className="add-reservation-btn" onClick={() => handleOpenModal()}>
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -180,12 +196,17 @@ export default function Reservations() {
                     </div>
                     <div>
                       <h3 className="guest-name">{reservation.guestName}</h3>
-                      <p className="room-info">Quarto {reservation.roomNumber}</p>
+                      <p className="room-info">Quarto {reservation.room?.number || reservation.roomNumber}</p>
                     </div>
                   </div>
-                  <span className={`reservation-status ${reservation.status}`}>
-                    {getStatusLabel(reservation.status)}
-                  </span>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span className={`reservation-status ${reservation.paymentStatus || 'pending'}`} style={{ fontSize: '12px' }}>
+                      {getPaymentStatusLabel(reservation.paymentStatus || 'pending')}
+                    </span>
+                    <span className={`reservation-status ${reservation.status}`}>
+                      {getStatusLabel(reservation.status)}
+                    </span>
+                  </div>
                 </div>
                 <div className="reservation-body">
                   <div className="date-info">
@@ -211,17 +232,11 @@ export default function Reservations() {
                   </div>
                 </div>
                 <div className="reservation-actions">
-                  <button className="btn-action btn-edit">
+                  <button className="btn-action btn-edit" onClick={() => handleOpenModal(reservation)}>
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     Editar
-                  </button>
-                  <button className="btn-action btn-cancel">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Cancelar
                   </button>
                 </div>
               </div>
@@ -229,6 +244,13 @@ export default function Reservations() {
           </div>
         )}
       </div>
+
+      <ReservationModal
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        onSuccess={handleModalSuccess}
+        reservation={selectedReservation}
+      />
     </div>
   );
 }

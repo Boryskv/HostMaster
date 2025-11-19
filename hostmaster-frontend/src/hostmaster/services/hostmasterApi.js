@@ -15,8 +15,19 @@ const fetchApi = async (endpoint, options = {}) => {
     headers
   });
 
-  if (!response.ok) throw new Error('API request failed');
-  return response.json();
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('API Error:', response.status, errorText);
+    throw new Error(`API request failed: ${response.status} - ${errorText}`);
+  }
+
+  // DELETE pode não retornar conteúdo
+  if (response.status === 204 || options.method === 'DELETE') {
+    return null;
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 };
 
 export const login = (email, password) =>

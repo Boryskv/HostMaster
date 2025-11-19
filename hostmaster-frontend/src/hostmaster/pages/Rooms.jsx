@@ -26,20 +26,26 @@ export default function Rooms() {
 
   const loadRooms = async () => {
     try {
+      setLoading(true);
       const data = await getRooms();
-      setRooms(data);
+      console.log('Quartos carregados do backend:', data);
+      
+      if (!data || data.length === 0) {
+        console.log('Nenhum quarto encontrado no banco de dados');
+      }
+      
+      setRooms(data || []);
     } catch (error) {
       console.error('Erro ao carregar quartos:', error);
-      // Mock data para demonstração caso o backend não esteja disponível
-      setRooms([
-        { id: 1, number: '1', type: 'Deluxe', price: 250, available: true, description: 'Quarto suíte com ar condicionado, frigobar, tv smart e mesa' },
-        { id: 2, number: '2', type: 'Deluxe', price: 250, available: false, description: 'Quarto suíte com ar condicionado, frigobar, tv smart e mesa' },
-        { id: 3, number: '3', type: 'Deluxe', price: 250, available: true, description: 'Quarto suíte com ar condicionado, frigobar, tv smart e mesa' },
-        { id: 4, number: '4', type: 'Standard', price: 150, available: true, description: 'Quarto confortável com cama de casal' },
-        { id: 5, number: '5', type: 'Standard', price: 150, available: false, description: 'Quarto aconchegante com vista para o jardim' },
-        { id: 6, number: '6', type: 'Standard', price: 150, available: true, description: 'Quarto standard com ar-condicionado' },
-        { id: 7, number: '170', type: 'Suite', price: 400, available: true, description: 'Suite presidencial com sala de estar e varanda ampla' },
-      ]);
+      
+      // Verifica se é erro de autenticação
+      if (error.message.includes('401')) {
+        alert('Sessão expirada. Por favor, faça login novamente.');
+        logout();
+      } else {
+        console.error('Detalhes do erro:', error);
+        setRooms([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -55,19 +61,21 @@ export default function Rooms() {
   const handleSave = async () => {
     try {
       setLoading(true);
-      const { id, ...roomData } = editingRoom;
-      await updateRoom(id, roomData);
+      const { id, createdAt, updatedAt, ...roomData } = editingRoom;
+      console.log('Salvando quarto:', id, roomData);
       
-      // Atualiza a lista local
-      setRooms(rooms.map(room => 
-        room.id === editingRoom.id ? editingRoom : room
-      ));
+      const updatedRoom = await updateRoom(id, roomData);
+      console.log('Quarto atualizado:', updatedRoom);
+      
+      // Recarrega a lista do backend
+      await loadRooms();
       
       setShowEditModal(false);
       setEditingRoom(null);
+      alert('Quarto atualizado com sucesso!');
     } catch (error) {
       console.error('Erro ao salvar quarto:', error);
-      alert('Erro ao salvar alterações. Tente novamente.');
+      alert(`Erro ao salvar alterações: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -77,16 +85,20 @@ export default function Rooms() {
     if (window.confirm(`Tem certeza que deseja deletar o Quarto ${editingRoom.number}?`)) {
       try {
         setLoading(true);
-        await deleteRoom(editingRoom.id);
+        console.log('Deletando quarto:', editingRoom.id);
         
-        // Remove da lista local
-        setRooms(rooms.filter(room => room.id !== editingRoom.id));
+        await deleteRoom(editingRoom.id);
+        console.log('Quarto deletado com sucesso');
+        
+        // Recarrega a lista do backend
+        await loadRooms();
         
         setShowEditModal(false);
         setEditingRoom(null);
+        alert('Quarto deletado com sucesso!');
       } catch (error) {
         console.error('Erro ao deletar quarto:', error);
-        alert('Erro ao deletar quarto. Tente novamente.');
+        alert(`Erro ao deletar quarto: ${error.message}`);
       } finally {
         setLoading(false);
       }
@@ -109,10 +121,13 @@ export default function Rooms() {
       }
 
       setLoading(true);
-      const createdRoom = await createRoom(newRoom);
+      console.log('Criando quarto:', newRoom);
       
-      // Adiciona o novo quarto à lista
-      setRooms([...rooms, createdRoom]);
+      const createdRoom = await createRoom(newRoom);
+      console.log('Quarto criado:', createdRoom);
+      
+      // Recarrega a lista do backend
+      await loadRooms();
       
       // Reseta o formulário
       setNewRoom({
@@ -124,9 +139,10 @@ export default function Rooms() {
       });
       
       setShowCreateModal(false);
+      alert('Quarto criado com sucesso!');
     } catch (error) {
       console.error('Erro ao criar quarto:', error);
-      alert('Erro ao criar quarto. Verifique se o número já não existe.');
+      alert(`Erro ao criar quarto: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -163,7 +179,17 @@ export default function Rooms() {
           <div className="loading">Carregando quartos...</div>
         ) : (
           <div className="rooms-grid">
-            {rooms.map((room) => (
+            {rooms.sort((a, b) => {
+              // Ordena por número do quarto (numérico quando possível, alfabético caso contrário)
+              const numA = parseInt(a.number);
+              const numB = parseInt(b.number);
+              
+              if (!isNaN(numA) && !isNaN(numB)) {
+                return numA - numB;
+              }
+              
+              return a.number.localeCompare(b.number);
+            }).map((room) => (
               <div key={room.id} className="room-card">
                 <div className="room-header">
                   <div className="room-number">Quarto {room.number}</div>
@@ -242,17 +268,6 @@ export default function Rooms() {
                   placeholder="Descreva as características do quarto..."
                 />
               </div>
-
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={newRoom.available}
-                    onChange={(e) => handleNewRoomChange('available', e.target.checked)}
-                  />
-                  <span>Disponível</span>
-                </label>
-              </div>
             </div>
 
             <div className="modal-footer">
@@ -319,17 +334,6 @@ export default function Rooms() {
                   value={editingRoom.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                 />
-              </div>
-
-              <div className="form-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={editingRoom.available}
-                    onChange={(e) => handleChange('available', e.target.checked)}
-                  />
-                  <span>Disponível</span>
-                </label>
               </div>
             </div>
 

@@ -1,42 +1,74 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getReservations } from '../services/hostmasterApi';
+import { getReservations, getRooms } from '../services/hostmasterApi';
 import './Dashboard.css';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [reservations, setReservations] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const stats = [
-    { label: 'Total de Quartos', value: '7', icon: 'bed' },
-    { label: 'Reservas Ativas', value: '6', icon: 'calendar' },
-    { label: 'Check-ins Hoje', value: '2', icon: 'check' },
-    { label: 'Ocupação', value: '43%', icon: 'chart' },
-  ];
-
   useEffect(() => {
-    loadReservations();
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    await Promise.all([loadReservations(), loadRooms()]);
+  };
 
   const loadReservations = async () => {
     try {
       const data = await getReservations();
-      setReservations(data);
+      setReservations(data || []);
     } catch (error) {
       console.error('Erro ao carregar reservas:', error);
-      // Mock data
-      setReservations([
-        { id: 1, guestName: 'João Silva', roomNumber: '1', checkIn: '2024-11-20', checkOut: '2024-11-25', status: 'confirmed' },
-        { id: 2, guestName: 'Maria Santos', roomNumber: '2', checkIn: '2024-11-18', checkOut: '2024-11-22', status: 'checked-in' },
-        { id: 3, guestName: 'Pedro Costa', roomNumber: '5', checkIn: '2024-11-25', checkOut: '2024-11-30', status: 'pending' },
-      ]);
+      setReservations([]);
+    }
+  };
+
+  const loadRooms = async () => {
+    try {
+      const data = await getRooms();
+      setRooms(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar quartos:', error);
+      setRooms([]);
     } finally {
       setLoading(false);
     }
   };
+
+  const calculateStats = () => {
+    const totalRooms = rooms.length;
+    const activeReservations = reservations.filter(r => 
+      r.status === 'confirmed' || r.status === 'checked-in'
+    ).length;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const checkInsToday = reservations.filter(r => {
+      const checkIn = new Date(r.checkIn + 'T00:00:00');
+      checkIn.setHours(0, 0, 0, 0);
+      return checkIn.getTime() === today.getTime();
+    }).length;
+    
+    const occupancyRate = totalRooms > 0 
+      ? Math.round((activeReservations / totalRooms) * 100) 
+      : 0;
+
+    return [
+      { label: 'Total de Quartos', value: totalRooms.toString(), icon: 'bed' },
+      { label: 'Reservas Ativas', value: activeReservations.toString(), icon: 'calendar' },
+      { label: 'Check-ins Hoje', value: checkInsToday.toString(), icon: 'check' },
+      { label: 'Ocupação', value: `${occupancyRate}%`, icon: 'chart' },
+    ];
+  };
+
+  const stats = calculateStats();
 
   const getStatusLabel = (status) => {
     const labels = {
