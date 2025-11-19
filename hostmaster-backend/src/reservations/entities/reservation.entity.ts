@@ -27,8 +27,8 @@ export class Reservation {
   @Column({ default: 'pending' })
   status: string;
 
-  @Column({ default: 'pending' })
-  paymentStatus: string; // pending, partial, paid
+  @Column({ nullable: true })
+  paymentStatus: string; // partial, paid
 
   @ManyToOne(() => User, (user) => user.reservations)
   @JoinColumn({ name: 'userId' })

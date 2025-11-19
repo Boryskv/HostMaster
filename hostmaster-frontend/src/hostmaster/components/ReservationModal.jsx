@@ -10,7 +10,7 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
     roomId: '',
     checkIn: '',
     checkOut: '',
-    paymentStatus: 'pending'
+    paymentStatus: ''
   });
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
           roomId: reservation.roomId || reservation.room?.id || '',
           checkIn: reservation.checkIn,
           checkOut: reservation.checkOut,
-          paymentStatus: reservation.paymentStatus || 'pending'
+          paymentStatus: reservation.paymentStatus === 'pending' ? '' : (reservation.paymentStatus || '')
         });
       } else {
         setFormData({
@@ -30,7 +30,7 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
           roomId: '',
           checkIn: '',
           checkOut: '',
-          paymentStatus: 'pending'
+          paymentStatus: ''
         });
       }
     }
@@ -161,15 +161,14 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
           </div>
 
           <div className="form-group">
-            <label htmlFor="paymentStatus">Status de Pagamento</label>
+            <label htmlFor="paymentStatus">Status de Pagamento (Opcional)</label>
             <select
               id="paymentStatus"
               name="paymentStatus"
               value={formData.paymentStatus}
               onChange={handleChange}
-              required
             >
-              <option value="pending">Pendente</option>
+              <option value="">Nenhum</option>
               <option value="partial">Sinal</option>
               <option value="paid">Pago</option>
             </select>

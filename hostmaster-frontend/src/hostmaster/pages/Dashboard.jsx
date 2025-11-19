@@ -76,6 +76,16 @@ export default function Dashboard() {
       'confirmed': 'Confirmada',
       'checked-in': 'Check-in',
       'checked-out': 'Check-out',
+      'cancelled': 'Cancelada'
+    };
+    return labels[status] || status;
+  };
+
+  const getPaymentStatusLabel = (status) => {
+    const labels = {
+      'pending': 'Pendente',
+      'partial': 'Sinal',
+      'paid': 'Pago'
     };
     return labels[status] || status;
   };
@@ -170,29 +180,59 @@ export default function Dashboard() {
 
           {loading ? (
             <div className="loading-text">Carregando reservas...</div>
+          ) : reservations.length === 0 ? (
+            <div className="empty-state">
+              <p>Nenhuma reserva encontrada</p>
+            </div>
           ) : (
             <div className="reservations-list-dashboard">
               {reservations.slice(0, 5).map((reservation) => (
-                <div key={reservation.id} className="reservation-item-dashboard">
-                  <div className="reservation-info">
-                    <div className="guest-avatar-small">
-                      {reservation.guestName.charAt(0)}
+                <div key={reservation.id} className="reservation-card-dashboard">
+                  <div className="reservation-header-dashboard">
+                    <div className="guest-info-dashboard">
+                      <div className="guest-avatar-dashboard">
+                        {reservation.guestName.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="guest-name-dashboard">{reservation.guestName}</h4>
+                        <p className="room-info-dashboard">Quarto {reservation.room?.number || reservation.roomNumber}</p>
+                      </div>
                     </div>
-                    <div className="reservation-details">
-                      <h4>{reservation.guestName}</h4>
-                      <p>Quarto {reservation.roomNumber}</p>
+                    <div>
+                      {reservation.paymentStatus && reservation.paymentStatus !== 'pending' ? (
+                        <span className={`reservation-status-dashboard ${reservation.paymentStatus}`}>
+                          {getPaymentStatusLabel(reservation.paymentStatus)}
+                        </span>
+                      ) : (
+                        <span className={`reservation-status-dashboard ${reservation.status}`}>
+                          {getStatusLabel(reservation.status)}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="reservation-dates">
-                    <span className="date-text">
-                      {new Date(reservation.checkIn).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                      {' → '}
-                      {new Date(reservation.checkOut).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                    </span>
+                  <div className="reservation-body-dashboard">
+                    <div className="date-info-dashboard">
+                      <div className="date-item-dashboard">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <div>
+                          <span className="date-label-dashboard">Check-in</span>
+                          <span className="date-value-dashboard">{new Date(reservation.checkIn).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      </div>
+                      <div className="date-separator-dashboard">→</div>
+                      <div className="date-item-dashboard">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <div>
+                          <span className="date-label-dashboard">Check-out</span>
+                          <span className="date-value-dashboard">{new Date(reservation.checkOut).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <span className={`status-badge ${reservation.status}`}>
-                    {getStatusLabel(reservation.status)}
-                  </span>
                 </div>
               ))}
             </div>

@@ -200,12 +200,15 @@ export default function Reservations() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <span className={`reservation-status ${reservation.paymentStatus || 'pending'}`} style={{ fontSize: '12px' }}>
-                      {getPaymentStatusLabel(reservation.paymentStatus || 'pending')}
-                    </span>
-                    <span className={`reservation-status ${reservation.status}`}>
-                      {getStatusLabel(reservation.status)}
-                    </span>
+                    {reservation.paymentStatus && reservation.paymentStatus !== 'pending' ? (
+                      <span className={`reservation-status ${reservation.paymentStatus}`}>
+                        {getPaymentStatusLabel(reservation.paymentStatus)}
+                      </span>
+                    ) : (
+                      <span className={`reservation-status ${reservation.status}`}>
+                        {getStatusLabel(reservation.status)}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="reservation-body">
