@@ -232,7 +232,7 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
               value={formData.paymentStatus}
               onChange={handleChange}
             >
-              <option value="">Nenhum</option>
+              <option value="">Pendente</option>
               <option value="partial">Sinal</option>
               <option value="paid">Pago</option>
             </select>

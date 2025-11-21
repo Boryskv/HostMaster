@@ -10,7 +10,6 @@ export default function Reservations() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState(null);
-  const [filter, setFilter] = useState('all');
   const [selectedDate, setSelectedDate] = useState('');
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -65,11 +64,6 @@ export default function Reservations() {
   };
 
   const filteredReservations = reservations.filter(reservation => {
-    // Filtro por status
-    if (filter !== 'all' && reservation.status !== filter) {
-      return false;
-    }
-
     // Filtro por data
     if (selectedDate) {
       // Normaliza as datas para comparação (apenas dia/mês/ano, sem hora)
@@ -81,15 +75,6 @@ export default function Reservations() {
       checkInDate.setHours(0, 0, 0, 0);
       checkOutDate.setHours(0, 0, 0, 0);
       filterDate.setHours(0, 0, 0, 0);
-      
-      // Debug - pode remover depois
-      console.log('Filtro de Data:', {
-        quarto: reservation.roomNumber,
-        checkIn: checkInDate.toLocaleDateString('pt-BR'),
-        checkOut: checkOutDate.toLocaleDateString('pt-BR'),
-        filtro: filterDate.toLocaleDateString('pt-BR'),
-        match: filterDate >= checkInDate && filterDate <= checkOutDate
-      });
       
       // Verifica se a data selecionada está entre check-in e check-out (inclusive)
       return filterDate >= checkInDate && filterDate <= checkOutDate;
@@ -119,33 +104,6 @@ export default function Reservations() {
       <div className="reservations-content">
         <div className="reservations-toolbar">
           <div className="toolbar-left">
-            <div className="filter-buttons">
-              <button 
-                className={filter === 'all' ? 'active' : ''} 
-                onClick={() => setFilter('all')}
-              >
-                Todas
-              </button>
-              <button 
-                className={filter === 'pending' ? 'active' : ''} 
-                onClick={() => setFilter('pending')}
-              >
-                Pendentes
-              </button>
-              <button 
-                className={filter === 'confirmed' ? 'active' : ''} 
-                onClick={() => setFilter('confirmed')}
-              >
-                Confirmadas
-              </button>
-              <button 
-                className={filter === 'checked-in' ? 'active' : ''} 
-                onClick={() => setFilter('checked-in')}
-              >
-                Check-in
-              </button>
-            </div>
-
             <div className="date-filter">
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
