@@ -151,9 +151,19 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
               required
             >
               <option value="">Selecione um quarto</option>
-              {rooms.map(room => (
+              {rooms.sort((a, b) => {
+                // Ordena numericamente quando possível, alfabeticamente caso contrário
+                const numA = parseInt(a.number);
+                const numB = parseInt(b.number);
+                
+                if (!isNaN(numA) && !isNaN(numB)) {
+                  return numA - numB;
+                }
+                
+                return a.number.localeCompare(b.number);
+              }).map(room => (
                 <option key={room.id} value={room.id}>
-                  Quarto {room.number} - {room.type} - R$ {room.price}/noite
+                  Quarto {room.number} - {room.type}
                 </option>
               ))}
             </select>

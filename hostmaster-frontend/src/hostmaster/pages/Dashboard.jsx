@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [reservations, setReservations] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterDate, setFilterDate] = useState('');
 
   useEffect(() => {
     loadData();
@@ -22,7 +23,6 @@ export default function Dashboard() {
   const loadReservations = async () => {
     try {
       const data = await getReservations();
-      console.log('Reservas carregadas no Dashboard:', data);
       setReservations(data || []);
     } catch (error) {
       console.error('Erro ao carregar reservas:', error);
@@ -184,12 +184,32 @@ export default function Dashboard() {
         <div className="reservations-overview">
           <div className="section-header">
             <h3>Quartos Reservados</h3>
-            <button className="view-all-btn" onClick={() => navigate('/reservations')}>
-              Ver Todas
-              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+            <div className="header-actions">
+              <div className="date-filter-dashboard">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <input
+                  type="date"
+                  value={filterDate}
+                  onChange={(e) => setFilterDate(e.target.value)}
+                  placeholder="Filtrar por data"
+                />
+                {filterDate && (
+                  <button className="clear-filter-btn" onClick={() => setFilterDate('')}>
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              <button className="view-all-btn" onClick={() => navigate('/reservations')}>
+                Ver Todas
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -200,7 +220,20 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="reservations-list-dashboard">
-              {reservations.slice(0, 5).map((reservation) => (
+              {(() => {
+                const filtered = reservations.filter(reservation => {
+                  if (!filterDate) return true;
+                  
+                  // Extrai apenas a parte da data (YYYY-MM-DD) do check-in
+                  let checkInStr = String(reservation.checkIn).split('T')[0];
+                  
+                  // Compara diretamente as strings no formato ISO
+                  return checkInStr === filterDate;
+                });
+                
+                // Se houver filtro, mostra todos os resultados. Sem filtro, limita a 5
+                const toShow = filterDate ? filtered : filtered.slice(0, 5);
+                return toShow.map((reservation) => (
                 <div key={reservation.id} className="reservation-card-dashboard">
                   <div className="reservation-header-dashboard">
                     <div className="guest-info-dashboard">
@@ -246,9 +279,21 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
+                    {reservation.totalAmount > 0 && (
+                      <div className="total-amount-dashboard">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                          <span className="total-label-dashboard">Total</span>
+                          <span className="total-value-dashboard">R$ {Number(reservation.totalAmount).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))}
+                ));
+              })()}
             </div>
           )}
         </div>
