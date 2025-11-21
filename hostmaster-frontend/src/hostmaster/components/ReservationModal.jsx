@@ -10,9 +10,7 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
     roomId: '',
     checkIn: '',
     checkOut: '',
-    paymentStatus: '',
-    numberOfPeople: 1,
-    pricePerPerson: 0
+    paymentStatus: ''
   });
 
   useEffect(() => {
@@ -24,9 +22,7 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
           roomId: reservation.roomId || reservation.room?.id || '',
           checkIn: reservation.checkIn,
           checkOut: reservation.checkOut,
-          paymentStatus: reservation.paymentStatus === 'pending' ? '' : (reservation.paymentStatus || ''),
-          numberOfPeople: reservation.numberOfPeople || 1,
-          pricePerPerson: reservation.pricePerPerson || 0
+          paymentStatus: reservation.paymentStatus === 'pending' ? '' : (reservation.paymentStatus || '')
         });
       } else {
         setFormData({
@@ -34,9 +30,7 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
           roomId: '',
           checkIn: '',
           checkOut: '',
-          paymentStatus: '',
-          numberOfPeople: 1,
-          pricePerPerson: 0
+          paymentStatus: ''
         });
       }
     }
@@ -58,19 +52,12 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
     try {
       console.log('Dados do formulário:', formData);
       
-      // Prepara os dados para envio
-      const dataToSend = {
-        ...formData,
-        numberOfPeople: Number(formData.numberOfPeople),
-        pricePerPerson: Number(formData.pricePerPerson)
-      };
-      
-      console.log('Dados a enviar:', dataToSend);
+      console.log('Dados a enviar:', formData);
       
       if (reservation) {
-        await updateReservation(reservation.id, dataToSend);
+        await updateReservation(reservation.id, formData);
       } else {
-        await createReservation(dataToSend);
+        await createReservation(formData);
       }
       onSuccess();
       onClose();
@@ -163,7 +150,7 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
                 return a.number.localeCompare(b.number);
               }).map(room => (
                 <option key={room.id} value={room.id}>
-                  Quarto {room.number} - {room.type}
+                  Quarto {room.number} - {room.type} - R$ {Number(room.price).toFixed(2)}/diária
                 </option>
               ))}
             </select>
@@ -190,35 +177,6 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
                 name="checkOut"
                 value={formData.checkOut}
                 onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="numberOfPeople">Número de Pessoas</label>
-              <input
-                type="number"
-                id="numberOfPeople"
-                name="numberOfPeople"
-                value={formData.numberOfPeople}
-                onChange={handleChange}
-                min="1"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="pricePerPerson">Valor por Pessoa (R$)</label>
-              <input
-                type="number"
-                id="pricePerPerson"
-                name="pricePerPerson"
-                value={formData.pricePerPerson}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
                 required
               />
             </div>

@@ -64,6 +64,7 @@ export default function Dashboard() {
     // 4. Total a Receber (soma de todos os totalAmount das reservas)
     const totalToReceive = reservations.reduce((sum, reservation) => {
       const amount = Number(reservation.totalAmount) || 0;
+      console.log('Reserva:', reservation.guestName, 'Total:', reservation.totalAmount, 'Convertido:', amount);
       return sum + amount;
     }, 0);
 
@@ -71,7 +72,8 @@ export default function Dashboard() {
       totalRooms,
       totalReservations,
       checkInsToday,
-      totalToReceive
+      totalToReceive,
+      reservationsData: reservations.map(r => ({ guest: r.guestName, total: r.totalAmount }))
     });
 
     return [
@@ -272,7 +274,7 @@ export default function Dashboard() {
                         </svg>
                         <div>
                           <span className="date-label-dashboard">Check-in</span>
-                          <span className="date-value-dashboard">{new Date(reservation.checkIn).toLocaleDateString('pt-BR')}</span>
+                          <span className="date-value-dashboard">{new Date(reservation.checkIn + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                         </div>
                       </div>
                       <div className="date-separator-dashboard">→</div>
@@ -282,7 +284,7 @@ export default function Dashboard() {
                         </svg>
                         <div>
                           <span className="date-label-dashboard">Check-out</span>
-                          <span className="date-value-dashboard">{new Date(reservation.checkOut).toLocaleDateString('pt-BR')}</span>
+                          <span className="date-value-dashboard">{new Date(reservation.checkOut + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                         </div>
                       </div>
                     </div>

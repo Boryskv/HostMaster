@@ -21,6 +21,10 @@ export default function Reservations() {
   const loadReservations = async () => {
     try {
       const data = await getReservations();
+      console.log('Reservas carregadas:', data);
+      if (data && data.length > 0) {
+        console.log('Primeira reserva - totalAmount:', data[0].totalAmount, 'room:', data[0].room);
+      }
       setReservations(data);
     } catch (error) {
       console.error('Erro ao carregar reservas:', error);
@@ -177,7 +181,7 @@ export default function Reservations() {
                       </svg>
                       <div>
                         <span className="date-label">Check-in</span>
-                        <span className="date-value">{new Date(reservation.checkIn).toLocaleDateString('pt-BR')}</span>
+                        <span className="date-value">{new Date(reservation.checkIn + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                       </div>
                     </div>
                     <div className="date-separator">→</div>
@@ -187,21 +191,26 @@ export default function Reservations() {
                       </svg>
                       <div>
                         <span className="date-label">Check-out</span>
-                        <span className="date-value">{new Date(reservation.checkOut).toLocaleDateString('pt-BR')}</span>
+                        <span className="date-value">{new Date(reservation.checkOut + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                       </div>
                     </div>
                   </div>
-                  {reservation.totalAmount > 0 && (
-                    <div className="total-amount-card">
-                      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div>
-                        <span className="total-label">Total a Receber</span>
-                        <span className="total-value">R$ {Number(reservation.totalAmount).toFixed(2)}</span>
-                      </div>
+                  <div className="total-amount-card">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <span className="total-label">Total a Receber</span>
+                      <span className="total-value">
+                        R$ {Number(reservation.totalAmount || 0).toFixed(2)}
+                        {(!reservation.totalAmount || reservation.totalAmount === 0) && (
+                          <span style={{ fontSize: '10px', color: 'rgba(224, 170, 255, 0.5)', marginLeft: '8px' }}>
+                            (Edite para recalcular)
+                          </span>
+                        )}
+                      </span>
                     </div>
-                  )}
+                  </div>
                 </div>
                 <div className="reservation-actions">
                   <button className="btn-action btn-edit" onClick={() => handleOpenModal(reservation)}>

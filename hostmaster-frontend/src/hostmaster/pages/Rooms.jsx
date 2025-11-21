@@ -13,6 +13,7 @@ export default function Rooms() {
   const [newRoom, setNewRoom] = useState({
     number: '',
     type: 'Standard',
+    price: 0,
     available: true,
     description: ''
   });
@@ -114,7 +115,7 @@ export default function Rooms() {
 
   const handleCreate = async () => {
     try {
-      if (!newRoom.number || !newRoom.type) {
+      if (!newRoom.number || !newRoom.type || !newRoom.price) {
         alert('Por favor, preencha todos os campos obrigatórios.');
         return;
       }
@@ -132,6 +133,7 @@ export default function Rooms() {
       setNewRoom({
         number: '',
         type: 'Standard',
+        price: 0,
         available: true,
         description: ''
       });
@@ -195,6 +197,7 @@ export default function Rooms() {
                 </div>
                 <div className="room-body">
                   <p className="room-description">{room.description}</p>
+                  <div className="room-price">R$ {Number(room.price).toFixed(2)}/diária</div>
                 </div>
                 <div className="room-actions">
                   <button className="btn-edit" onClick={() => handleEdit(room)}>
@@ -243,6 +246,18 @@ export default function Rooms() {
                   <option value="Deluxe">Deluxe</option>
                   <option value="Casa">Casa</option>
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label>Valor da Diária (R$) *</label>
+                <input
+                  type="number"
+                  value={newRoom.price}
+                  onChange={(e) => handleNewRoomChange('price', parseFloat(e.target.value))}
+                  min="0"
+                  step="0.01"
+                  required
+                />
               </div>
 
               <div className="form-group">
@@ -302,6 +317,17 @@ export default function Rooms() {
                   <option value="Deluxe">Deluxe</option>
                   <option value="Casa">Casa</option>
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label>Valor da Diária (R$)</label>
+                <input
+                  type="number"
+                  value={editingRoom.price}
+                  onChange={(e) => handleChange('price', parseFloat(e.target.value))}
+                  min="0"
+                  step="0.01"
+                />
               </div>
 
               <div className="form-group">

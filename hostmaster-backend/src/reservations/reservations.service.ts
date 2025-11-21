@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Reservation } from './entities/reservation.entity';
+import { Room } from '../rooms/entities/room.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 
@@ -10,38 +11,46 @@ export class ReservationsService {
   constructor(
     @InjectRepository(Reservation)
     private reservationsRepository: Repository<Reservation>,
+    @InjectRepository(Room)
+    private roomsRepository: Repository<Room>,
   ) {}
 
-  create(
+  async create(
     createReservationDto: CreateReservationDto,
     userId: string,
   ): Promise<Reservation> {
-    // Calcula o número de dias (mínimo 1 diária)
-    const checkInDate = new Date(createReservationDto.checkIn);
-    const checkOutDate = new Date(createReservationDto.checkOut);
-    const diffTime = checkOutDate.getTime() - checkInDate.getTime();
-    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    // Se for o mesmo dia ou diferença menor que 1, conta como 1 diária
-    const numberOfDays = diffDays <= 0 ? 1 : Math.ceil(diffDays);
+    // Busca o quarto para pegar o preço
+    const room = await this.roomsRepository.findOne({
+      where: { id: createReservationDto.roomId },
+    });
 
-    // Calcula o total: numberOfPeople × pricePerPerson × numberOfDays
-    const numberOfPeople = createReservationDto.numberOfPeople || 1;
-    const pricePerPerson = createReservationDto.pricePerPerson || 0;
-    const totalAmount = numberOfPeople * pricePerPerson * numberOfDays;
+    if (!room) {
+      throw new Error('Quarto não encontrado');
+    }
+
+    // Calcula o número de dias
+    // Adiciona 'T00:00:00' para evitar problemas de timezone
+    const checkInDate = new Date(createReservationDto.checkIn + 'T00:00:00');
+    const checkOutDate = new Date(createReservationDto.checkOut + 'T00:00:00');
+    const diffTime = checkOutDate.getTime() - checkInDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    // Mesma data = 0 diárias, 1 dia de diferença = 1 diária
+    const numberOfDays = diffDays;
+
+    // Calcula o total: preço do quarto × número de diárias
+    const roomPrice = Number(room.price) || 0;
+    const totalAmount = roomPrice * numberOfDays;
 
     console.log('Cálculo da reserva:', {
       checkIn: createReservationDto.checkIn,
       checkOut: createReservationDto.checkOut,
       numberOfDays,
-      numberOfPeople,
-      pricePerPerson,
+      roomPrice,
       totalAmount
     });
 
     const reservation = this.reservationsRepository.create({
       ...createReservationDto,
-      numberOfPeople,
-      pricePerPerson,
       totalAmount,
       userId,
     });
@@ -71,32 +80,41 @@ export class ReservationsService {
   ): Promise<Reservation> {
     const reservation = await this.findOne(id);
     
-    // Recalcula o total se os valores mudaram
+    // Recalcula o total se as datas ou o quarto mudaram
     const updateData = { ...updateReservationDto };
     
     // Pega os valores atualizados ou mantém os existentes
     const checkIn = updateData.checkIn || reservation.checkIn;
     const checkOut = updateData.checkOut || reservation.checkOut;
-    const numberOfPeople = updateData.numberOfPeople || reservation.numberOfPeople;
-    const pricePerPerson = updateData.pricePerPerson || reservation.pricePerPerson;
+    const roomId = updateData.roomId || reservation.roomId;
     
-    // Calcula o número de dias (mínimo 1 diária)
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
+    // Busca o quarto para pegar o preço
+    const room = await this.roomsRepository.findOne({
+      where: { id: roomId },
+    });
+
+    if (!room) {
+      throw new Error('Quarto não encontrado');
+    }
+    
+    // Calcula o número de dias
+    // Adiciona 'T00:00:00' para evitar problemas de timezone
+    const checkInDate = new Date(checkIn + 'T00:00:00');
+    const checkOutDate = new Date(checkOut + 'T00:00:00');
     const diffTime = checkOutDate.getTime() - checkInDate.getTime();
-    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    // Se for o mesmo dia ou diferença menor que 1, conta como 1 diária
-    const numberOfDays = diffDays <= 0 ? 1 : Math.ceil(diffDays);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    // Mesma data = 0 diárias, 1 dia de diferença = 1 diária
+    const numberOfDays = diffDays;
     
-    // Calcula o total: numberOfPeople × pricePerPerson × numberOfDays
-    updateData.totalAmount = numberOfPeople * pricePerPerson * numberOfDays;
+    // Calcula o total: preço do quarto × número de diárias
+    const roomPrice = Number(room.price) || 0;
+    updateData.totalAmount = roomPrice * numberOfDays;
     
     console.log('Atualização da reserva:', {
       checkIn,
       checkOut,
       numberOfDays,
-      numberOfPeople,
-      pricePerPerson,
+      roomPrice,
       totalAmount: updateData.totalAmount
     });
     
