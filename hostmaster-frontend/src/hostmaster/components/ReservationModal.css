@@ -109,6 +109,7 @@
   color: white;
   font-size: 14px;
   transition: all 0.2s;
+  box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -136,6 +137,11 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  margin-bottom: 20px;
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
 }
 
 .modal-actions {

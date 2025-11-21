@@ -75,10 +75,10 @@ export default function Dashboard() {
     });
 
     return [
-      { label: 'Total de Quartos', value: totalRooms.toString(), icon: 'bed' },
       { label: 'Reservas Ativas', value: totalReservations.toString(), icon: 'calendar' },
-      { label: 'Check-ins Hoje', value: checkInsToday.toString(), icon: 'check' },
       { label: 'Total a Receber', value: `R$ ${totalToReceive.toFixed(2)}`, icon: 'money' },
+      { label: 'Check-ins Hoje', value: checkInsToday.toString(), icon: 'check' },
+      { label: 'Total de Quartos', value: totalRooms.toString(), icon: 'bed' },
     ];
   };
 
@@ -166,17 +166,17 @@ export default function Dashboard() {
         <div className="quick-actions">
           <h3>Ações Rápidas</h3>
           <div className="actions-grid">
-            <button className="action-btn" onClick={() => navigate('/rooms')}>
-              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18M3 16h18" />
-              </svg>
-              Ver Quartos
-            </button>
             <button className="action-btn" onClick={() => navigate('/reservations')}>
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               Nova Reserva
+            </button>
+            <button className="action-btn" onClick={() => navigate('/rooms')}>
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18M3 16h18" />
+              </svg>
+              Ver Quartos
             </button>
           </div>
         </div>
@@ -221,6 +221,7 @@ export default function Dashboard() {
           ) : (
             <div className="reservations-list-dashboard">
               {(() => {
+                // Filtra por data se houver filtro
                 const filtered = reservations.filter(reservation => {
                   if (!filterDate) return true;
                   
@@ -231,9 +232,15 @@ export default function Dashboard() {
                   return checkInStr === filterDate;
                 });
                 
-                // Se houver filtro, mostra todos os resultados. Sem filtro, limita a 5
-                const toShow = filterDate ? filtered : filtered.slice(0, 5);
-                return toShow.map((reservation) => (
+                // Ordena por data de check-in (mais recente primeiro)
+                const sorted = filtered.sort((a, b) => {
+                  const dateA = new Date(a.checkIn);
+                  const dateB = new Date(b.checkIn);
+                  return dateA - dateB; // Ordem crescente (mais antiga primeiro)
+                });
+                
+                // Mostra todas as reservas (sem limite)
+                return sorted.map((reservation) => (
                 <div key={reservation.id} className="reservation-card-dashboard">
                   <div className="reservation-header-dashboard">
                     <div className="guest-info-dashboard">
