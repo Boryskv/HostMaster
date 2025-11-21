@@ -30,6 +30,15 @@ export class Reservation {
   @Column({ nullable: true })
   paymentStatus: string; // partial, paid
 
+  @Column({ type: 'int', default: 1 })
+  numberOfPeople: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  pricePerPerson: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  totalAmount: number;
+
   @ManyToOne(() => User, (user) => user.reservations)
   @JoinColumn({ name: 'userId' })
   user: User;

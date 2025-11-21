@@ -21,6 +21,8 @@ export class ReservationsController {
 
   @Post()
   create(@Body() createReservationDto: CreateReservationDto, @Request() req) {
+    console.log('Dados recebidos no controller:', createReservationDto);
+    console.log('User ID:', req.user.id);
     return this.reservationsService.create(createReservationDto, req.user.id);
   }
 

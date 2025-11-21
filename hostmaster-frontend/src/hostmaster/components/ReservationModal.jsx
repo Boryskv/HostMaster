@@ -10,7 +10,9 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
     roomId: '',
     checkIn: '',
     checkOut: '',
-    paymentStatus: ''
+    paymentStatus: '',
+    numberOfPeople: 1,
+    pricePerPerson: 0
   });
 
   useEffect(() => {
@@ -22,7 +24,9 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
           roomId: reservation.roomId || reservation.room?.id || '',
           checkIn: reservation.checkIn,
           checkOut: reservation.checkOut,
-          paymentStatus: reservation.paymentStatus === 'pending' ? '' : (reservation.paymentStatus || '')
+          paymentStatus: reservation.paymentStatus === 'pending' ? '' : (reservation.paymentStatus || ''),
+          numberOfPeople: reservation.numberOfPeople || 1,
+          pricePerPerson: reservation.pricePerPerson || 0
         });
       } else {
         setFormData({
@@ -30,7 +34,9 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
           roomId: '',
           checkIn: '',
           checkOut: '',
-          paymentStatus: ''
+          paymentStatus: '',
+          numberOfPeople: 1,
+          pricePerPerson: 0
         });
       }
     }
@@ -50,16 +56,28 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
     setLoading(true);
 
     try {
+      console.log('Dados do formulário:', formData);
+      
+      // Prepara os dados para envio
+      const dataToSend = {
+        ...formData,
+        numberOfPeople: Number(formData.numberOfPeople),
+        pricePerPerson: Number(formData.pricePerPerson)
+      };
+      
+      console.log('Dados a enviar:', dataToSend);
+      
       if (reservation) {
-        await updateReservation(reservation.id, formData);
+        await updateReservation(reservation.id, dataToSend);
       } else {
-        await createReservation(formData);
+        await createReservation(dataToSend);
       }
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Erro ao salvar reserva:', error);
-      alert('Erro ao salvar reserva. Tente novamente.');
+      console.error('Detalhes do erro:', error.response?.data || error.message);
+      alert(`Erro ao salvar reserva: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -84,8 +102,15 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    let parsedValue = value;
+    
+    // Converte valores numéricos
+    if (type === 'number') {
+      parsedValue = value === '' ? 0 : Number(value);
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: parsedValue }));
   };
 
   if (!isOpen) return null;
@@ -155,6 +180,35 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
                 name="checkOut"
                 value={formData.checkOut}
                 onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="numberOfPeople">Número de Pessoas</label>
+              <input
+                type="number"
+                id="numberOfPeople"
+                name="numberOfPeople"
+                value={formData.numberOfPeople}
+                onChange={handleChange}
+                min="1"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="pricePerPerson">Valor por Pessoa (R$)</label>
+              <input
+                type="number"
+                id="pricePerPerson"
+                name="pricePerPerson"
+                value={formData.pricePerPerson}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
                 required
               />
             </div>

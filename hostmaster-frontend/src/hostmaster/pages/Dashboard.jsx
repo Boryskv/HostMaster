@@ -22,6 +22,7 @@ export default function Dashboard() {
   const loadReservations = async () => {
     try {
       const data = await getReservations();
+      console.log('Reservas carregadas no Dashboard:', data);
       setReservations(data || []);
     } catch (error) {
       console.error('Erro ao carregar reservas:', error);
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const loadRooms = async () => {
     try {
       const data = await getRooms();
+      console.log('Quartos carregados no Dashboard:', data);
       setRooms(data || []);
     } catch (error) {
       console.error('Erro ao carregar quartos:', error);
@@ -42,29 +44,41 @@ export default function Dashboard() {
   };
 
   const calculateStats = () => {
+    // 1. Total de Quartos cadastrados
     const totalRooms = rooms.length;
-    const activeReservations = reservations.filter(r => 
-      r.status === 'confirmed' || r.status === 'checked-in'
-    ).length;
     
+    // 2. Total de Reservas (todas as reservas existentes)
+    const totalReservations = reservations.length;
+    
+    // 3. Check-ins para hoje
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
     const checkInsToday = reservations.filter(r => {
+      if (!r.checkIn) return false;
       const checkIn = new Date(r.checkIn + 'T00:00:00');
       checkIn.setHours(0, 0, 0, 0);
-      return checkIn.getTime() === today.getTime();
+      return checkIn.getTime() === today.getTime() && r.status !== 'cancelled';
     }).length;
     
-    const occupancyRate = totalRooms > 0 
-      ? Math.round((activeReservations / totalRooms) * 100) 
-      : 0;
+    // 4. Total a Receber (soma de todos os totalAmount das reservas)
+    const totalToReceive = reservations.reduce((sum, reservation) => {
+      const amount = Number(reservation.totalAmount) || 0;
+      return sum + amount;
+    }, 0);
+
+    console.log('Stats Dashboard:', {
+      totalRooms,
+      totalReservations,
+      checkInsToday,
+      totalToReceive
+    });
 
     return [
       { label: 'Total de Quartos', value: totalRooms.toString(), icon: 'bed' },
-      { label: 'Reservas Ativas', value: activeReservations.toString(), icon: 'calendar' },
+      { label: 'Reservas Ativas', value: totalReservations.toString(), icon: 'calendar' },
       { label: 'Check-ins Hoje', value: checkInsToday.toString(), icon: 'check' },
-      { label: 'Ocupação', value: `${occupancyRate}%`, icon: 'chart' },
+      { label: 'Total a Receber', value: `R$ ${totalToReceive.toFixed(2)}`, icon: 'money' },
     ];
   };
 
@@ -137,9 +151,9 @@ export default function Dashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 )}
-                {stat.icon === 'chart' && (
+                {stat.icon === 'money' && (
                   <svg fill="none" viewBox="0 0 24 24" stroke="#240046" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 )}
               </div>
