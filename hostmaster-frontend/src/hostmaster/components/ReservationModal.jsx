@@ -150,7 +150,7 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
                 return a.number.localeCompare(b.number);
               }).map(room => (
                 <option key={room.id} value={room.id}>
-                  Quarto {room.number} - {room.type} - R$ {Number(room.price).toFixed(2)}/diária
+                  Quarto {room.number} - R$ {Number(room.price).toFixed(2)}/diária
                 </option>
               ))}
             </select>
@@ -183,14 +183,15 @@ export default function ReservationModal({ isOpen, onClose, onSuccess, reservati
           </div>
 
           <div className="form-group">
-            <label htmlFor="paymentStatus">Status de Pagamento (Opcional)</label>
+            <label htmlFor="paymentStatus">Status de Pagamento</label>
             <select
               id="paymentStatus"
               name="paymentStatus"
               value={formData.paymentStatus}
               onChange={handleChange}
+              required
             >
-              <option value="">Pendente</option>
+              <option value="">Selecione...</option>
               <option value="partial">Sinal</option>
               <option value="paid">Pago</option>
             </select>

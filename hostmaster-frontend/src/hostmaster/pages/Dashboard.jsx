@@ -44,43 +44,72 @@ export default function Dashboard() {
   };
 
   const calculateStats = () => {
-    // 1. Total de Quartos cadastrados
-    const totalRooms = rooms.length;
-    
-    // 2. Total de Reservas (todas as reservas existentes)
+    // 1. Total de Reservas (todas as reservas existentes)
     const totalReservations = reservations.length;
     
-    // 3. Check-ins para hoje
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const checkInsToday = reservations.filter(r => {
-      if (!r.checkIn) return false;
-      const checkIn = new Date(r.checkIn + 'T00:00:00');
-      checkIn.setHours(0, 0, 0, 0);
-      return checkIn.getTime() === today.getTime() && r.status !== 'cancelled';
-    }).length;
-    
-    // 4. Total a Receber (soma de todos os totalAmount das reservas)
+    // 2. Total a Receber (soma de todos os valores das reservas)
     const totalToReceive = reservations.reduce((sum, reservation) => {
       const amount = Number(reservation.totalAmount) || 0;
-      console.log('Reserva:', reservation.guestName, 'Total:', reservation.totalAmount, 'Convertido:', amount);
       return sum + amount;
+    }, 0);
+    
+    // 3. Recebido
+    // Lógica: "Pago" = valor total recebido
+    //         "Sinal" = metade recebida
+    //         Sem status ou "pending" = nada recebido
+    const amountReceived = reservations.reduce((sum, reservation) => {
+      const amount = Number(reservation.totalAmount) || 0;
+      const paymentStatus = reservation.paymentStatus;
+      
+      if (paymentStatus === 'paid') {
+        // Pago: recebeu tudo
+        return sum + amount;
+      } else if (paymentStatus === 'partial') {
+        // Sinal: recebeu metade
+        return sum + (amount / 2);
+      } else {
+        // Pendente ou sem status: não recebeu nada
+        return sum;
+      }
+    }, 0);
+
+    // 4. Falta Receber
+    // Lógica: "Sinal" = metade recebido (conta metade do valor)
+    //         "Pago" = totalmente recebido (não conta)
+    //         Sem status ou "pending" = nada recebido (conta valor total)
+    const amountPending = reservations.reduce((sum, reservation) => {
+      const amount = Number(reservation.totalAmount) || 0;
+      const paymentStatus = reservation.paymentStatus;
+      
+      if (paymentStatus === 'paid') {
+        // Pago: não falta receber nada
+        return sum;
+      } else if (paymentStatus === 'partial') {
+        // Sinal: falta receber metade
+        return sum + (amount / 2);
+      } else {
+        // Pendente ou sem status: falta receber tudo
+        return sum + amount;
+      }
     }, 0);
 
     console.log('Stats Dashboard:', {
-      totalRooms,
       totalReservations,
-      checkInsToday,
       totalToReceive,
-      reservationsData: reservations.map(r => ({ guest: r.guestName, total: r.totalAmount }))
+      amountReceived,
+      amountPending,
+      reservationsData: reservations.map(r => ({ 
+        guest: r.guestName, 
+        total: r.totalAmount, 
+        paymentStatus: r.paymentStatus 
+      }))
     });
 
     return [
       { label: 'Reservas Ativas', value: totalReservations.toString(), icon: 'calendar' },
-      { label: 'Total a Receber', value: `R$ ${totalToReceive.toFixed(2)}`, icon: 'money' },
-      { label: 'Check-ins Hoje', value: checkInsToday.toString(), icon: 'check' },
-      { label: 'Total de Quartos', value: totalRooms.toString(), icon: 'bed' },
+      { label: 'Recebido', value: `R$ ${amountReceived.toFixed(2)}`, icon: 'money' },
+      { label: 'Total', value: `R$ ${totalToReceive.toFixed(2)}`, icon: 'total' },
+      { label: 'Falta Receber', value: `R$ ${amountPending.toFixed(2)}`, icon: 'pending' },
     ];
   };
 
@@ -148,14 +177,19 @@ export default function Dashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 )}
-                {stat.icon === 'check' && (
+                {stat.icon === 'total' && (
                   <svg fill="none" viewBox="0 0 24 24" stroke="#240046" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 )}
                 {stat.icon === 'money' && (
                   <svg fill="none" viewBox="0 0 24 24" stroke="#240046" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+                {stat.icon === 'pending' && (
+                  <svg fill="none" viewBox="0 0 24 24" stroke="#240046" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 )}
               </div>

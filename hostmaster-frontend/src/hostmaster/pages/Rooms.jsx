@@ -12,7 +12,7 @@ export default function Rooms() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newRoom, setNewRoom] = useState({
     number: '',
-    type: 'Standard',
+    type: '',
     price: 0,
     available: true,
     description: ''
@@ -115,7 +115,7 @@ export default function Rooms() {
 
   const handleCreate = async () => {
     try {
-      if (!newRoom.number || !newRoom.type || !newRoom.price) {
+      if (!newRoom.number || !newRoom.price) {
         alert('Por favor, preencha todos os campos obrigatórios.');
         return;
       }
@@ -132,7 +132,7 @@ export default function Rooms() {
       // Reseta o formulário
       setNewRoom({
         number: '',
-        type: 'Standard',
+        type: '',
         price: 0,
         available: true,
         description: ''
@@ -193,7 +193,6 @@ export default function Rooms() {
               <div key={room.id} className="room-card">
                 <div className="room-header">
                   <div className="room-number">Quarto {room.number}</div>
-                  <div className="room-type-badge">{room.type}</div>
                 </div>
                 <div className="room-body">
                   <p className="room-description">{room.description}</p>
@@ -234,18 +233,6 @@ export default function Rooms() {
                   onChange={(e) => handleNewRoomChange('number', e.target.value)}
                   placeholder="Ex: 1, 2, 170..."
                 />
-              </div>
-
-              <div className="form-group">
-                <label>Tipo *</label>
-                <select
-                  value={newRoom.type}
-                  onChange={(e) => handleNewRoomChange('type', e.target.value)}
-                >
-                  <option value="Standard">Standard</option>
-                  <option value="Deluxe">Deluxe</option>
-                  <option value="Casa">Casa</option>
-                </select>
               </div>
 
               <div className="form-group">
@@ -305,18 +292,6 @@ export default function Rooms() {
                   value={editingRoom.number}
                   onChange={(e) => handleChange('number', e.target.value)}
                 />
-              </div>
-
-              <div className="form-group">
-                <label>Tipo</label>
-                <select
-                  value={editingRoom.type}
-                  onChange={(e) => handleChange('type', e.target.value)}
-                >
-                  <option value="Standard">Standard</option>
-                  <option value="Deluxe">Deluxe</option>
-                  <option value="Casa">Casa</option>
-                </select>
               </div>
 
               <div className="form-group">
